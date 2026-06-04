@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PizzaTrack - Armar Pedido</title>
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+
     <style>
         :root { --orange: #ff6a00; --yellow: #ffb800; --dark: #0f0f0f; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
@@ -128,7 +131,6 @@
             }
         }
 
-        //si JS truena por cualquier cosa, el HTML manda la información base para que no se quede congelado
         document.getElementById('formPizza').addEventListener('submit', function(e) {
             const inputDetalle = document.getElementById('detalle_completo');
             if (!inputDetalle.value || inputDetalle.value === "") {
