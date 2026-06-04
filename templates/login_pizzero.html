@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Personal - PizzaTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #0a0a0a; color: white; font-family: 'Poppins', sans-serif;
+            margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; box-sizing: border-box;
+        }
+        .login-container {
+            background: #111; border: 1px solid #222; padding: 40px; border-radius: 20px;
+            width: 100%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); box-sizing: border-box; text-align: center;
+        }
+        h1 { color: #ff6a00; font-size: 24px; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
+        .sub { color: #666; font-size: 13px; margin-bottom: 30px; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; color: #aaa; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
+        .input-field {
+            width: 100%; background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px 15px; 
+            border-radius: 8px; font-family: inherit; font-size: 14px; box-sizing: border-box; transition: 0.3s;
+        }
+        .input-field:focus { border-color: #ff6a00; outline: none; background: #222; }
+        
+        .btn-login {
+            width: 100%; background: #ff6a00; color: white; border: none; padding: 14px; 
+            border-radius: 8px; font-size: 14px; font-weight: bold; text-transform: uppercase; 
+            cursor: pointer; transition: 0.2s; font-family: inherit; margin-top: 10px;
+        }
+        .btn-login:hover { background: #ff7b1a; transform: translateY(-1px); }
+        
+        .error-message {
+            background: rgba(244, 67, 54, 0.1); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.2);
+            padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>👨‍🍳 PizzaTrack</h1>
+        <div class="sub">Panel de Control de Producción</div>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-message">❌ {{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form action="/login_pizzero" method="POST">
+            <div class="form-group">
+                <label for="usuario">Nombre de Usuario</label>
+                <input type="text" id="usuario" name="usuario" class="input-field" placeholder="Ej. Abel Osorio" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Contraseña de Acceso</label>
+                <input type="password" id="password" name="password" class="input-field" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="btn-login">Ingresar al Monitor</button>
+        </form>
+    </div>
+
+</body>
+</html>

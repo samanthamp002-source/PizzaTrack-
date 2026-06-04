@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Pedidos en Tiempo Real - PizzaTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #0a0a0a; color: white; font-family: 'Poppins', sans-serif;
+            margin: 0; padding: 40px 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box;
+        }
+        h1 { color: #ff6600; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .subtitulo { color: #888; font-size: 14px; margin-bottom: 40px; }
+        
+        .contenedor-ordenes {
+            display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; width: 100%; max-width: 1200px;
+        }
+        
+        .card-seguimiento {
+            background: rgba(22, 22, 22, 0.9); backdrop-filter: blur(20px);
+            padding: 30px; border-radius: 25px; width: 360px; box-sizing: border-box;
+            border: 1px solid rgba(255, 102, 0, 0.15); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            transition: transform 0.3s ease;
+        }
+        .card-seguimiento:hover { transform: translateY(-5px); }
+        
+        .header-pedido { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; }
+        .ticket-id { color: #ff6600; font-weight: bold; font-size: 20px; margin: 0; }
+        .ticket-total { color: #4caf50; font-weight: bold; margin: 0; }
+        .detalle-pizza { font-size: 12px; color: #aaa; margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 10px; border: 1px solid #1f1f1f; }
+
+        .paso {
+            display: flex; align-items: center; margin: 12px 0; padding: 12px 15px;
+            border-radius: 12px; background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03); transition: all 0.4s ease;
+            color: #444; 
+        }
+        .circulo { width: 8px; height: 8px; border-radius: 50%; background: #222; margin-right: 15px; transition: all 0.4s ease; }
+        
+        .activo { 
+            background: rgba(255, 102, 0, 0.06); border: 1px solid rgba(255, 102, 0, 0.25); color: #ff9800;
+        }
+        .activo .circulo { background: #ff6600; box-shadow: 0 0 10px #ff6600; }
+
+        .btn-volver { display: inline-block; margin-top: 40px; color: #ff6600; text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px dashed #ff6600; padding-bottom: 2px; }
+        .no-pedidos { text-align: center; color: #666; margin-top: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <h1>📋 Mis Pedidos Activos</h1>
+    <p class="subtitulo">Hola {{ nombre }}, aquí puedes monitorear el avance de tus órdenes en tiempo real</p>
+
+    <div id="contenedor-dinamico" class="contenedor-ordenes">
+        {% for pedido in pedidos %}
+            <div class="card-seguimiento">
+                <div class="header-pedido">
+                    <h3 class="ticket-id">Ticket #{{ pedido.id }}</h3>
+                    <span class="ticket-total">${{ "%.2f"|format(pedido.total if pedido.total else 0.0) }}</span>
+                </div>
+                
+                <div class="detalle-pizza">
+                    <strong>Tamaño:</strong> {{ pedido.tamano }}<br>
+                    <strong>Detalle:</strong> {{ pedido.ingredientes }}
+                </div>
+
+                <div class="paso {% if pedido.progreso >= 1 %} activo {% endif %}">
+                    <div class="circulo"></div>
+                    <span>🍕 Preparando...</span>
+                </div>
+
+                <div class="paso {% if pedido.progreso >= 2 %} activo {% endif %}">
+                    <div class="circulo"></div>
+                    <span>🧑‍🍳 ¡Ya casi lista!</span>
+                </div>
+
+                <div class="paso {% if pedido.progreso >= 3 %} activo {% endif %}">
+                    <div class="circulo"></div>
+                    <span>🛍️ ¡Lista para recoger!</span>
+                </div>
+
+                <div class="paso {% if pedido.estado == 'Pagado' or pedido.progreso >= 4 %} activo {% endif %}">
+                    <div class="circulo"></div>
+                    <span>💳 Cuenta Pagada {% if pedido.metodo_pago != 'Ninguno' %}({{ pedido.metodo_pago }}){% endif %}</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="no-pedidos">
+                <p>No tienes ninguna orden activa en este momento. 🍕</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('index') }}" class="btn-volver">← Volver a la Tienda</a>
+
+<script>
+    function actualizarSeguimientoMulti() {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const nuevoContenido = doc.querySelector('#contenedor-dinamico').innerHTML;
+                const contenidoActual = document.querySelector('#contenedor-dinamico').innerHTML;
+                
+                if (nuevoContenido.trim() !== contenidoActual.trim()) {
+                    document.querySelector('#contenedor-dinamico').innerHTML = nuevoContenido;
+                }
+            }).catch(err => console.error("Error al sincronizar las órdenes"));
+    }
+    setInterval(actualizarSeguimientoMulti, 2000);
+</script>
+
+</body>
+</html>

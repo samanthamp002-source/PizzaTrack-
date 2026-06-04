@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasarela de Pago Segura - PizzaTrack</title>
+    <style>
+        :root { --orange: #ff6a00; --yellow: #ffb800; --dark: #0f0f0f; --card-bg: #161616; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: linear-gradient(145deg, #1a1a1a, #0a0a0a); padding: 30px 40px; border-radius: 30px; width: 430px; border: 1px solid #333; box-shadow: 0 25px 60px rgba(0,0,0,0.9); text-align: center; }
+        
+        .header-checkout { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .secure-badge { background: #132a13; color: #4caf50; padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid #2e7d32; }
+        
+        .monto-box { background: var(--card-bg); padding: 15px; border-radius: 15px; border: 1px solid #222; margin-bottom: 20px; text-align: left; }
+        .monto-label { font-size: 0.85rem; color: #888; }
+        .monto-val { font-size: 2.2rem; color: var(--yellow); font-weight: bold; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; background: #222; border: 1px solid #444; color: #aaa; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 0.9rem; }
+        .tab-btn.active { background: #fff; color: #000; border-color: #fff; }
+
+        /* Simulador de Tarjeta Visual */
+        .credit-card-sim { background: linear-gradient(135deg, #2c3e50, #000000); padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); border: 1px solid #444; position: relative; overflow: hidden; }
+        .card-chip { width: 40px; height: 30px; background: #e0b034; border-radius: 5px; margin-bottom: 20px; }
+        .card-num-display { font-size: 1.3rem; letter-spacing: 2px; font-family: monospace; margin-bottom: 15px; color: #fff; }
+        .card-lower { display: flex; justify-content: space-between; font-size: 0.8rem; color: #ccc; font-family: monospace; }
+
+        /* Formulario */
+        .form-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 6px; font-weight: 600; }
+        input { width: 100%; padding: 12px; background: #111; border: 1px solid #333; border-radius: 8px; color: white; font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--orange); }
+        .row { display: flex; gap: 10px; }
+
+        .btn-magic { background: rgba(255, 184, 0, 0.1); color: var(--yellow); border: 1px dashed var(--yellow); padding: 10px; width: 100%; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-bottom: 15px; font-weight: bold; }
+        .btn-magic:hover { background: rgba(255, 184, 0, 0.2); }
+
+        /* Cajas de Aviso */
+        .info-box { border: 1px dashed var(--orange); border-radius: 10px; padding: 15px; margin-bottom: 25px; text-align: left; background: rgba(255, 106, 0, 0.03); }
+        .info-box p { color: #bbb; font-size: 0.9rem; margin: 0; line-height: 1.4; }
+
+        .btn-pagar { background: linear-gradient(to right, #ff4e00, #ec9f05); color: white; border: none; padding: 16px; width: 100%; border-radius: 50px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(255, 78, 0, 0.2); margin-top: 10px; }
+        .btn-pagar:hover { transform: translateY(-2px); opacity: 0.95; }
+        .cancelar { display: block; margin-top: 15px; color: #666; text-decoration: none; font-size: 0.9rem; }
+        .cancelar:hover { color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-checkout">
+        <span style="font-weight: bold; font-size: 1.1rem;">PizzaPay Checkout</span>
+        <span class="secure-badge">🔒 MODO PRUEBA</span>
+    </div>
+
+    <div class="monto-box">
+        <div class="monto-label">Total a pagar por Orden #{{ pedido.id }}:</div>
+        <div class="monto-val">${{ pedido.total }}</div>
+    </div>
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" onclick="switchMetodo('tarjeta')">💳 Tarjeta de Crédito</button>
+        <button type="button" class="tab-btn" onclick="switchMetodo('efectivo')">💵 Efectivo</button>
+    </div>
+
+    <form action="{{ url_for('procesar_pago') }}" method="POST" id="payment-form">
+        <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
+        <input type="hidden" name="metodo_pago" id="metodo_pago" value="tarjeta">
+
+        <div id="seccion-tarjeta">
+            <div class="credit-card-sim">
+                <div class="card-chip"></div>
+                <div class="card-num-display" id="card-mirror">•••• •••• •••• ••••</div>
+                <div class="card-lower">
+                    <div>TITULAR: <span id="name-mirror">SAMANTHA MONTAÑO</span></div>
+                    <div>VENCE: <span id="date-mirror">MM/AA</span></div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-magic" onclick="llenarTarjetaFicticia()">
+                ✨ Autocompletar con Tarjeta de Prueba (Stripe)
+            </button>
+
+            <div class="form-group">
+                <label>Número de Tarjeta</label>
+                <input type="text" name="tarjeta_num" id="input-card" placeholder="4242 4242 4242 4242" maxlength="19" required oninput="syncCard()">
+            </div>
+            <div class="form-group">
+                <label>Nombre del Titular</label>
+                <input type="text" name="tarjeta_nombre" id="input-name" placeholder="Nombre completo" required oninput="syncCard()">
+            </div>
+            <div class="row">
+                <div class="form-group" style="flex: 2;">
+                    <label>Fecha de Expiración</label>
+                    <input type="text" name="tarjeta_exp" id="input-date" placeholder="MM/AA" maxlength="5" required oninput="syncCard()">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>CVC / CVV</label>
+                    <input type="password" name="tarjeta_cvv" id="input-cvv" placeholder="123" maxlength="3" required>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <p>
+                    <b>¡Paga con tarjeta y solo recoge tu pedido!</b> Tu pago será procesado de manera segura e inmediata. Pasa por tu pizza en cuanto esté lista.
+                </p>
+            </div>
+        </div>
+
+        <div id="seccion-efectivo" style="display: none;">
+            <div class="info-box" style="background: rgba(255, 106, 0, 0.05); margin-top: 10px;">
+                <h4 style="color: var(--orange); margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px;">
+                    🛍️ Ordena y Recoja
+                </h4>
+                <p style="color: #bbb; font-size: 0.9rem; margin: 0; line-height: 1.4;">
+                    Tu pedido comenzará a cocinarse de inmediato. Puedes pasar a liquidar el total en efectivo directamente en nuestra sucursal cuando tu estado cambie a <b>"¡Ya casi lista!"</b>.
+                </p>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-pagar" id="btn-submit">Pagar con Tarjeta y Ordenar</button>
+    </form>
+
+    <a href="{{ url_for('carrito') }}" class="cancelar">← Volver al Carrito</a>
+</div>
+
+<script>
+    function syncCard() {
+        const card = document.getElementById('input-card').value;
+        const name = document.getElementById('input-name').value;
+        const date = document.getElementById('input-date').value;
+
+        document.getElementById('card-mirror').innerText = card || "•••• •••• •••• ••••";
+        document.getElementById('name-mirror').innerText = (name || "SAMANTHA MONTAÑO").toUpperCase();
+        document.getElementById('date-mirror').innerText = date || "MM/AA";
+    }
+
+    function llenarTarjetaFicticia() {
+        document.getElementById('input-card').value = "4242 4242 4242 4242";
+        document.getElementById('input-name').value = "Samantha Montaño";
+        document.getElementById('input-date').value = "12/29";
+        document.getElementById('input-cvv').value = "422";
+        syncCard();
+    }
+
+    function switchMetodo(tipo) {
+        const botones = document.querySelectorAll('.tab-btn');
+        botones[0].classList.toggle('active', tipo === 'tarjeta');
+        botones[1].classList.toggle('active', tipo === 'efectivo');
+
+        // Ahora ambos IDs existen en el DOM y no causarán errores de ejecución
+        document.getElementById('seccion-tarjeta').style.display = tipo === 'tarjeta' ? 'block' : 'none';
+        document.getElementById('seccion-efectivo').style.display = tipo === 'efectivo' ? 'block' : 'none';
+        document.getElementById('metodo_pago').value = tipo;
+
+        const inputs = [document.getElementById('input-card'), document.getElementById('input-name'), document.getElementById('input-date'), document.getElementById('input-cvv')];
+        inputs.forEach(input => {
+            if (tipo === 'efectivo') {
+                input.removeAttribute('required');
+            } else {
+                input.setAttribute('required', 'required');
+            }
+        });
+
+        document.getElementById('btn-submit').innerText = tipo === 'efectivo' ? "Enviar Pedido para Recoger" : "Pagar con Tarjeta y Ordenar";
+    }
+</script>
+
+</body>
+</html>

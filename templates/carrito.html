@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito - PizzaTrack</title>
+    
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <style>
+        :root {
+            --orange: #ff4e00;
+            --yellow: #ec9f05;
+            --dark: #0f0f0f;
+            --card-bg: #141414;
+            --red: #ff4444;
+            --input-bg: #1c1c1c;
+        }
+
+        body {
+            background: var(--dark);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .checkout-card {
+            background: var(--card-bg);
+            border: 1px solid #2c2c2c;
+            border-radius: 20px;
+            padding: 35px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .checkout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 15px;
+        }
+
+        .checkout-header h2 { margin: 0; font-size: 1.4rem; color: white; font-weight: bold; }
+
+        .badge-prueba {
+            background: rgba(236, 159, 5, 0.1);
+            color: var(--yellow);
+            border: 1px solid rgba(236, 159, 5, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .total-box {
+            background: #1a1a1a;
+            border: 1px solid #2c2c2c;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .total-box span { color: #888; font-size: 0.9rem; display: block; margin-bottom: 5px; }
+        .total-box h3 { margin: 0; font-size: 2.2rem; color: var(--yellow); font-weight: bold; }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn-method {
+            background: #1c1c1c;
+            border: 1px solid #333;
+            color: #aaa;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s ease;
+        }
+
+        .btn-method:hover { border-color: #555; color: white; }
+        .btn-method.active { background: white; color: black; border-color: white; }
+
+        .form-bancario {
+            display: none;
+            text-align: left;
+            margin-bottom: 20px;
+            background: #181818;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+        }
+
+        #card-element {
+            background: var(--input-bg);
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        #card-errors {
+            color: var(--red);
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .info-nota {
+            background: rgba(255, 78, 0, 0.05);
+            border: 1px dashed rgba(255, 78, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-nota-title { color: var(--orange); font-weight: bold; font-size: 0.95rem; margin-bottom: 6px; }
+        .info-nota-text { color: #aaa; font-size: 0.85rem; line-height: 1.4; margin: 0; }
+
+        .btn-submit-checkout {
+            background: linear-gradient(90deg, #ff4e00, #ec9f05);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255, 78, 0, 0.3);
+            transition: 0.2s;
+        }
+
+        .btn-submit-checkout:hover { transform: translateY(-2px); }
+        .btn-back { display: inline-block; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-card">
+        <div class="checkout-header">
+            <h2>PizzaTrack Checkout</h2>
+            <span class="badge-prueba">🔒 SANDBOX SIMULADO</span>
+        </div>
+
+        <div class="total-box">
+            <span>Total a pagar por Orden:</span>
+            <h3>${{ total_carrito if total_carrito else '0.0' }}</h3>
+        </div>
+
+        <div class="payment-methods">
+            <button type="button" class="btn-method" id="btnTarjeta" onclick="seleccionarMetodo('tarjeta')">
+                 💳 Tarjeta
+            </button>
+            <button type="button" class="btn-method active" id="btnEfectivo" onclick="seleccionarMetodo('efectivo')">
+                 💵 Efectivo
+            </button>
+        </div>
+
+        <form action="/procesar_pago" method="POST" id="formCheckout">
+            <input type="hidden" name="pedido_id" value="{{ compras[0]['id'] if compras else '' }}">
+            <input type="hidden" name="metodo_pago" id="metodoPagoInput" value="efectivo">
+
+            <div class="form-bancario" id="panelTarjeta">
+                <label style="color: #aaa; font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 10px;">
+                    Tarjeta de Crédito o Débito (Modo Sandbox)
+                </label>
+                <div id="card-element"></div>
+                <div id="card-errors" role="alert"></div>
+            </div>
+
+            <div class="info-nota" id="notaPago">
+                <div class="info-nota-title">🛵 Sucursal (Efectivo)</div>
+                <p class="info-nota-text">Tu pedido pasará directamente a cocina y liquidas al recibir.</p>
+            </div>
+
+            <button type="submit" class="btn-submit-checkout" id="btnAccionPrincipal">
+                Enviar Pedido en Efectivo
+            </button>
+        </form>
+
+        <center><a href="/index" class="btn-back">← Volver al Menú</a></center>
+    </div>
+
+    <script>
+        // Inicialización visual de Stripe Elements para mantener el diseño impecable
+        const stripe = Stripe('pk_test_51P3mXRFKjV29dfS8XbXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXvXv');
+        const elements = stripe.elements();
+
+        const card = elements.create('card', {
+            style: {
+                base: {
+                    color: '#ffffff',
+                    fontFamily: '"Segoe UI", sans-serif',
+                    fontSmoothing: 'antialiased',
+                    fontSize: '16px',
+                    '::placeholder': { color: '#666666' }
+                },
+                invalid: { color: '#ff4444', iconColor: '#ff4444' }
+            }
+        });
+
+        card.mount('#card-element');
+
+        function seleccionarMetodo(metodo) {
+            const btnTarjeta = document.getElementById('btnTarjeta');
+            const btnEfectivo = document.getElementById('btnEfectivo');
+            const panelTarjeta = document.getElementById('panelTarjeta');
+            const notaPago = document.getElementById('notaPago');
+            const btnAccionPrincipal = document.getElementById('btnAccionPrincipal');
+            const metodoInput = document.getElementById('metodoPagoInput');
+
+            if (metodo === 'tarjeta') {
+                btnTarjeta.classList.add('active');
+                btnEfectivo.classList.remove('active');
+                panelTarjeta.style.display = 'block';
+                notaPago.style.display = 'none';
+                metodoInput.value = 'tarjeta';
+                btnAccionPrincipal.innerText = 'Procesar Pago Sandbox';
+                btnAccionPrincipal.style.background = 'linear-gradient(90deg, #2196f3, #00bcd4)';
+            } else {
+                btnEfectivo.classList.add('active');
+                btnTarjeta.classList.remove('active');
+                panelTarjeta.style.display = 'none';
+                notaPago.style.display = 'block';
+                metodoInput.value = 'efectivo';
+                btnAccionPrincipal.innerText = 'Enviar Pedido en Efectivo';
+                btnAccionPrincipal.style.background = 'linear-gradient(90deg, #ff4e00, #ec9f05)';
+            }
+        }
+
+        // Manejo del envío del formulario interceptando Stripe para entorno local estable
+        const form = document.getElementById('formCheckout');
+        form.addEventListener('submit', function(event) {
+            const metodoInput = document.getElementById('metodoPagoInput').value;
+            
+            // Si es efectivo o tarjeta en entorno simulado, dejamos enviar el formulario directo a Flask
+            if (metodoInput === 'efectivo' || metodoInput === 'tarjeta') {
+                return true; 
+            }
+            
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>

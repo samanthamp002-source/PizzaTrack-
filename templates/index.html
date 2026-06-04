@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PizzaTrack - Armar Pedido</title>
+    <style>
+        :root { --orange: #ff6a00; --yellow: #ffb800; --dark: #0f0f0f; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: linear-gradient(145deg, #1a1a1a, #0a0a0a); padding: 30px 40px; border-radius: 40px; width: 480px; text-align: center; border: 1px solid #333; box-shadow: 0 25px 60px rgba(0,0,0,0.9); }
+        .user-welcome { font-size: 1.6rem; font-weight: bold; color: var(--yellow); margin-bottom: 20px; }
+        .especialidad-select { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: 1px solid var(--orange); border-radius: 10px; margin-bottom: 20px; font-size: 1rem; outline: none; }
+        .pizza-frame { width: 140px; height: 140px; margin: 0 auto; border-radius: 50%; border: 4px solid var(--orange); box-shadow: 0 0 25px rgba(255, 106, 0, 0.4); overflow: hidden; position: relative; background: black; transition: 0.4s; }
+        .pizza-display { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .slices-info { font-size: 0.9rem; color: #888; margin: 15px 0; font-weight: 500; }
+        .size-box { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 25px; }
+        .size-box input { display: none; }
+        .size-btn { flex: 1; padding: 12px; background: #1a1a1a; border-radius: 15px; cursor: pointer; border: 2px solid #333; transition: 0.3s; font-size: 0.8rem; }
+        .size-box input:checked + .size-btn { border-color: var(--yellow); background: #2d2200; color: var(--yellow); }
+        .grid-ingredientes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .card-item { background: rgba(255, 255, 255, 0.03); border: 1px solid #333; padding: 10px; border-radius: 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .card-item img { width: 35px; height: 35px; border-radius: 8px; object-fit: cover; }
+        .card-item:has(input:checked) { border-color: var(--yellow); background: rgba(255, 184, 0, 0.08); color: var(--yellow); }
+        .total-price { font-size: 2.5rem; font-weight: bold; color: var(--yellow); margin-bottom: 20px; }
+        .btn-ordenar { background: linear-gradient(to right, #ff4e00, #ec9f05); color: white; border: none; padding: 18px; width: 100%; border-radius: 50px; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-welcome">¡Hola, {{ nombre }}!</div>
+        
+        <form action="/ordenar" method="POST" id="formPizza">
+            <input type="hidden" id="detalle_completo" name="ingredientes">
+
+            <select id="especialidad" name="especialidad" class="especialidad-select" onchange="updateUI()">
+                <option value="queso" data-img="pizza_queso.png" data-precios="[100, 140, 190]">Solo Queso</option>
+                <option value="peperoni" data-img="pizza_peperoni.png" data-precios="[120, 160, 210]">Pepperoni Clásica</option>
+                <option value="margarita" data-img="pizza_margarita.png" data-precios="[110, 150, 200]">Pizza Margarita</option>
+                <option value="hawaiana" data-img="hawaiana.png" data-precios="[130, 170, 220]">Hawaiana</option>
+                <option value="carnes" data-img="carnes.png" data-precios="[150, 190, 250]">Carnes Frías</option>
+            </select>
+
+            <div id="frame" class="pizza-frame">
+                <img src="/static/img/pizza_queso.png" id="pizza-img" class="pizza-display" alt="Pizza">
+            </div>
+            <div class="slices-info" id="slices-text">Aprox. 4 rebanadas</div>
+
+            <div class="size-box">
+                <input type="radio" name="size" id="chica" value="0" data-f="130" data-z="1.1" data-sl="4" checked onchange="updateUI()">
+                <label for="chica" class="size-btn"><strong>Chica</strong><br><span id="label-chica">$100</span></label>
+                
+                <input type="radio" name="size" id="mediana" value="1" data-f="160" data-z="1.25" data-sl="6" onchange="updateUI()">
+                <label for="mediana" class="size-btn"><strong>Mediana</strong><br><span id="label-mediana">$140</span></label>
+                
+                <input type="radio" name="size" id="grande" value="2" data-f="190" data-z="1.5" data-sl="8" onchange="updateUI()">
+                <label for="grande" class="size-btn"><strong>Grande</strong><br><span id="label-grande">$190</span></label>
+            </div>
+
+            <div class="grid-ingredientes">
+                <label class="card-item"><input type="checkbox" name="ingrediente" value="15_Pepperoni" onchange="updateUI()" style="display:none;"><img src="/static/img/pepperoni.png"> Pepperoni (+$15)</label>
+                <label class="card-item"><input type="checkbox" name="ingrediente" value="15_Jamón" onchange="updateUI()" style="display:none;"><img src="/static/img/jamon.png"> Jamón (+$15)</label>
+                <label class="card-item"><input type="checkbox" name="ingrediente" value="15_Piña" onchange="updateUI()" style="display:none;"><img src="/static/img/pina.png"> Piña (+$15)</label>
+                <label class="card-item"><input type="checkbox" name="ingrediente" value="20_E. Queso" onchange="updateUI()" style="display:none;"><img src="/static/img/icon_queso.png"> E. Queso (+$20)</label>
+            </div>
+
+            <div class="total-price">$<span id="price-val">100</span></div>
+            
+            <button type="submit" class="btn-ordenar">Añadir al Carrito</button>
+        </form>
+    </div>
+
+    <script>
+        function updateUI() {
+            try {
+                const especialidad = document.getElementById('especialidad');
+                const sizeSelected = document.querySelector('input[name="size"]:checked');
+                const priceDisplay = document.getElementById('price-val');
+                const inputDetalle = document.getElementById('detalle_completo');
+                const frame = document.getElementById('frame');
+                const img = document.getElementById('pizza-img');
+                const slices = document.getElementById('slices-text');
+
+                if (!especialidad || !sizeSelected) return;
+
+                const selectedOption = especialidad.options[especialidad.selectedIndex];
+                const preciosBase = JSON.parse(selectedOption.getAttribute('data-precios'));
+                const nombreEspecialidad = selectedOption.text;
+                const nombreImg = selectedOption.getAttribute('data-img');
+
+                document.getElementById('label-chica').innerText = `$${preciosBase[0]}`;
+                document.getElementById('label-mediana').innerText = `$${preciosBase[1]}`;
+                document.getElementById('label-grande').innerText = `$${preciosBase[2]}`;
+
+                let indexSize = parseInt(sizeSelected.value);
+                let precioBasePizza = preciosBase[indexSize];
+                
+                let labelTarget = document.querySelector(`label[for="${sizeSelected.id}"] strong`);
+                let nombreTamaño = labelTarget ? labelTarget.innerText : "Chica";
+                
+                let stringDetalle = `${nombreEspecialidad} (${nombreTamaño}):${precioBasePizza}`;
+                let total = precioBasePizza;
+
+                document.querySelectorAll('input[name="ingrediente"]:checked').forEach(i => {
+                    let partes = i.value.split('_'); 
+                    if(partes.length === 2) {
+                        total += parseInt(partes[0]);
+                        stringDetalle += `|${partes[1]}:${partes[0]}`;
+                    }
+                });
+
+                if (priceDisplay) priceDisplay.innerText = total;
+                if (inputDetalle) inputDetalle.value = stringDetalle;
+
+                if (nombreImg && img) {
+                    img.src = "/static/img/" + nombreImg;
+                }
+                if (frame) {
+                    frame.style.width = sizeSelected.getAttribute('data-f') + "px";
+                    frame.style.height = sizeSelected.getAttribute('data-f') + "px";
+                }
+                if (img) {
+                    img.src = "/static/img/" + nombreImg;
+                    img.style.transform = `scale(${sizeSelected.getAttribute('data-z')})`;
+                }
+                if (slices) slices.innerText = `Aprox. ${sizeSelected.getAttribute('data-sl')} rebanadas`;
+            } catch (e) {
+                console.error("Error en updateUI interceptado: ", e);
+            }
+        }
+
+        //si JS truena por cualquier cosa, el HTML manda la información base para que no se quede congelado
+        document.getElementById('formPizza').addEventListener('submit', function(e) {
+            const inputDetalle = document.getElementById('detalle_completo');
+            if (!inputDetalle.value || inputDetalle.value === "") {
+                const especialidad = document.getElementById('especialidad');
+                const selectedOption = especialidad.options[especialidad.selectedIndex];
+                const preciosBase = JSON.parse(selectedOption.getAttribute('data-precios'));
+                inputDetalle.value = `${selectedOption.text} (Chica):${preciosBase[0]}`;
+            }
+        });
+        
+        window.onload = updateUI;
+    </script>
+</body>
+</html>

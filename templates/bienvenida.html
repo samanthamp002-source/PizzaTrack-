@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a PizzaTrack</title>
+    <style>
+        :root { 
+            --orange: #ff6a00; 
+            --yellow: #ffb800; 
+            --dark: #0a0a0a; 
+            --glow: rgba(255, 106, 0, 0.5);
+        }
+        
+        body {
+            background: var(--dark);
+            color: white;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Contenedor con efecto de profundidad */
+        .hero-container {
+            text-align: center;
+            padding: 40px;
+            background: radial-gradient(circle at center, #1a1a1a 0%, var(--dark) 70%);
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .logo-box {
+            position: relative;
+            margin-bottom: 30px;
+            display: inline-block;
+        }
+
+        /* Animación para que el logo "viva" */
+        .logo-img {
+            width: 200px;
+            filter: drop-shadow(0 0 15px var(--orange));
+            animation: pulseLogo 3s infinite ease-in-out;
+        }
+
+        /* Brillo ambiental detrás del logo */
+        .logo-box::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 120%; height: 120%;
+            background: var(--glow);
+            filter: blur(50px);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            background: linear-gradient(135deg, #ff4e00 0%, #ec9f05 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #ccc;
+            margin: 15px auto 45px;
+            max-width: 450px;
+            line-height: 1.6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 16px 40px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 0.95rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .btn-login {
+            border: 2px solid var(--orange);
+            color: var(--orange);
+        }
+
+        .btn-login:hover {
+            background: var(--orange);
+            color: white;
+            box-shadow: 0 0 30px var(--glow);
+        }
+
+        .btn-register {
+            background: linear-gradient(to right, #ff4e00, #ec9f05);
+            color: white;
+            box-shadow: 0 10px 20px rgba(255, 78, 0, 0.2);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(255, 78, 0, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulseLogo {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--orange)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 25px var(--orange)); }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-container">
+        <div class="logo-box">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PizzaTrack Logo" class="logo-img">
+        </div>
+        <h1>PizzaTrack</h1>
+        <p>Tu pizza favorita, armada por ti y monitoreada en tiempo real. ¡Bienvenid@ a la mejor experiencia!</p>
+        
+        <div class="btn-group">
+            <a href="{{ url_for('login') }}" class="btn btn-login">Entrar</a>
+            <a href="{{ url_for('registro') }}" class="btn btn-register">Comenzar</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - PizzaTrack</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #0c0c0c;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: #1e1e1e;
+            border-radius: 20px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            height: auto;
+            padding: 40px 30px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .logo-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .logo-title h1 {
+            color: #ffb703;
+            font-weight: bold;
+            font-size: 2rem;
+            margin: 0;
+        }
+        h2 {
+            color: #ffffff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-control {
+            background-color: #e9e9e9;
+            border: 1px solid #cccccc;
+            color: #121212;
+            border-radius: 10px;
+            padding: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            font-weight: 500;
+        }
+        .form-control:focus {
+            border-color: #fb8500;
+            background-color: #ffffff;
+            color: #000000;
+            box-shadow: 0 0 0 0.2rem rgba(251, 133, 0, 0.25);
+            outline: none;
+        }
+        .btn-enter {
+            background: linear-gradient(90deg, #ff5e00, #fb8500);
+            color: #ffffff;
+            border: none;
+            border-radius: 25px;
+            padding: 12px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.3s;
+            margin-top: 10px;
+        }
+        .btn-enter:hover {
+            transform: scale(1.02);
+            opacity: 0.95;
+        }
+        .register-link {
+            display: block;
+            margin-top: 20px;
+            color: #fb8500;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .register-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo-title">
+            <h1>PizzaTrack</h1>
+        </div>
+        <h2>Iniciar Sesión</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              {% if category == 'success' or 'éxito' in message or 'exito' in message %}
+                <div class="alert alert-success alert-dismissible fade show p-2 b-0" style="font-size: 0.88rem; background-color: #14321a; color: #d1e7dd; border: 1px solid #28a745; border-radius: 10px;" role="alert">
+                    <strong>✅ ¡Éxito!:</strong> {{ message }}
+                </div>
+              {% else %}
+                <div class="alert alert-danger alert-dismissible fade show p-2 b-0" style="font-size: 0.88rem; background-color: #721c24; color: #f8d7da; border: none; border-radius: 10px;" role="alert">
+                    <strong>⚠️ Error:</strong> {{ message }}
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="form-group">
+                <input type="email" name="correo" class="form-control" placeholder="Correo electrónico" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+            </div>
+            
+            <button type="submit" class="btn-enter">Entrar</button>
+        </form>
+
+        <a href="{{ url_for('registro') }}" class="register-link">¿No tienes cuenta? Regístrate</a>
+    </div>
+
+</body>
+</html>
